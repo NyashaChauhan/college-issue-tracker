@@ -2,73 +2,206 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Global base styles ───────────────────────────────── */
+/* ── CampusResolve Design Tokens (CSS Custom Properties) ── */
+:root {
+  --color-bg:           #F6F4EF;
+  --color-surface:      #FFFFFF;
+  --color-primary:      #0F766E;
+  --color-primary-dark: #115E59;
+  --color-accent:       #D97745;
+  --color-accent-light: #FAEBD7;
+  --color-text:         #17201F;
+  --color-muted:        #66736F;
+  --color-border:       #E3E5DF;
+  --color-success:      #16805B;
+  --color-success-bg:   #D1FAE5;
+  --color-warning:      #C47A16;
+  --color-warning-bg:   #FEF3C7;
+  --color-danger:       #C94A4A;
+  --color-danger-bg:    #FEE2E2;
+  --radius-card:        0.75rem;
+  --shadow-card:        0 1px 3px 0 rgba(15,118,110,0.06), 0 1px 2px -1px rgba(15,118,110,0.04);
+  --shadow-card-md:     0 4px 12px 0 rgba(15,118,110,0.08), 0 2px 4px -2px rgba(15,118,110,0.04);
+}
+
+/* ── Global Base ─────────────────────────────────────────── */
 @layer base {
   html {
-    @apply text-gray-900 antialiased;
+    @apply antialiased;
+    color: var(--color-text);
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
   }
   body {
-    @apply bg-gray-50 min-h-screen;
+    background-color: var(--color-bg);
+    min-height: 100vh;
+  }
+  *:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
   }
 }
 
-/* ── Reusable component classes ───────────────────────── */
+/* ── Reusable Component Classes ─────────────────────────── */
 @layer components {
+
+  /* Buttons */
   .btn-primary {
-    @apply inline-flex items-center justify-center px-4 py-2 rounded-lg
-           bg-primary-600 text-white font-medium text-sm
-           hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500
-           disabled:opacity-50 disabled:cursor-not-allowed transition-colors;
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg
+           bg-primary-600 text-white font-semibold text-sm tracking-wide
+           hover:bg-primary-700 active:bg-primary-800
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2
+           disabled:opacity-50 disabled:cursor-not-allowed
+           transition-all duration-150 ease-out;
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center px-4 py-2 rounded-lg
-           bg-white text-gray-700 font-medium text-sm border border-gray-300
-           hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500
-           disabled:opacity-50 disabled:cursor-not-allowed transition-colors;
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg
+           bg-white text-brand-text font-semibold text-sm
+           border border-brand-border
+           hover:bg-brand-bg hover:border-primary-300
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2
+           disabled:opacity-50 disabled:cursor-not-allowed
+           transition-all duration-150 ease-out;
   }
 
   .btn-danger {
-    @apply inline-flex items-center justify-center px-4 py-2 rounded-lg
-           bg-red-600 text-white font-medium text-sm
-           hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500
-           disabled:opacity-50 disabled:cursor-not-allowed transition-colors;
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg
+           bg-danger text-white font-semibold text-sm
+           hover:bg-red-700 active:bg-red-800
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2
+           disabled:opacity-50 disabled:cursor-not-allowed
+           transition-all duration-150 ease-out;
   }
 
+  .btn-accent {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg
+           bg-accent text-white font-semibold text-sm
+           hover:bg-accent-dark
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2
+           disabled:opacity-50 disabled:cursor-not-allowed
+           transition-all duration-150 ease-out;
+  }
+
+  /* Inputs */
   .input-field {
-    @apply block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm
-           placeholder-gray-400
+    @apply block w-full px-3.5 py-2.5 rounded-lg text-sm text-brand-text
+           bg-white border border-brand-border
+           placeholder:text-brand-muted
            focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-           disabled:bg-gray-50 disabled:text-gray-500;
+           disabled:bg-brand-bg disabled:text-brand-muted disabled:cursor-not-allowed
+           transition-all duration-150 ease-out;
   }
 
   .input-error {
-    @apply border-red-500 focus:ring-red-500;
+    @apply border-danger focus:ring-danger;
   }
 
+  /* Labels */
   .label {
-    @apply block text-sm font-medium text-gray-700 mb-1;
+    @apply block text-sm font-semibold text-brand-text mb-1.5;
   }
 
   .error-text {
-    @apply mt-1 text-xs text-red-600;
+    @apply mt-1.5 text-xs font-medium text-danger flex items-center gap-1;
   }
 
+  /* Cards */
   .card {
-    @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6;
+    background-color: var(--color-surface);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+    border: 1px solid var(--color-border);
+    @apply p-6;
   }
 
+  .card-hover {
+    @apply card transition-shadow duration-200 hover:shadow-card-md;
+  }
+
+  /* Badges — base */
   .badge {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold
+           whitespace-nowrap;
   }
 
-  .badge-open        { @apply badge bg-yellow-100 text-yellow-800; }
-  .badge-in_progress { @apply badge bg-blue-100 text-blue-800; }
-  .badge-resolved    { @apply badge bg-green-100 text-green-800; }
-  .badge-closed      { @apply badge bg-gray-100 text-gray-700; }
+  /* Status badges */
+  .badge-open {
+    @apply badge;
+    background-color: #E6F7F5;
+    color: #0F766E;
+    border: 1px solid #99F6E4;
+  }
 
-  .badge-low    { @apply badge bg-gray-100 text-gray-700; }
-  .badge-medium { @apply badge bg-yellow-100 text-yellow-800; }
-  .badge-high   { @apply badge bg-orange-100 text-orange-800; }
-  .badge-urgent { @apply badge bg-red-100 text-red-800; }
+  .badge-in_progress {
+    @apply badge;
+    background-color: #FEF3C7;
+    color: #92400E;
+    border: 1px solid #FDE68A;
+  }
+
+  .badge-resolved {
+    @apply badge;
+    background-color: #D1FAE5;
+    color: #065F46;
+    border: 1px solid #6EE7B7;
+  }
+
+  .badge-closed {
+    @apply badge;
+    background-color: #F3F4F6;
+    color: #6B7280;
+    border: 1px solid #E5E7EB;
+  }
+
+  /* Priority badges */
+  .badge-low {
+    @apply badge;
+    background-color: #F3F4F6;
+    color: #6B7280;
+    border: 1px solid #E5E7EB;
+  }
+
+  .badge-medium {
+    @apply badge;
+    background-color: #E6F7F5;
+    color: #0F766E;
+    border: 1px solid #99F6E4;
+  }
+
+  .badge-high {
+    @apply badge;
+    background-color: #FEF3C7;
+    color: #92400E;
+    border: 1px solid #FDE68A;
+  }
+
+  .badge-urgent {
+    @apply badge;
+    background-color: #FEE2E2;
+    color: #991B1B;
+    border: 1px solid #FCA5A5;
+  }
+
+  /* AI-grouped badge */
+  .badge-ai {
+    @apply badge;
+    background-color: #E6F7F5;
+    color: #115E59;
+    border: 1px solid #5EEAD4;
+  }
+
+  /* Section heading */
+  .section-heading {
+    @apply text-lg font-semibold text-brand-text;
+  }
+
+  /* Page heading */
+  .page-heading {
+    @apply text-2xl font-bold text-brand-text tracking-tight;
+  }
+
+  /* Divider */
+  .divider {
+    @apply border-t border-brand-border;
+  }
 }
