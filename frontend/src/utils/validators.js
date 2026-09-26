@@ -11,74 +11,28 @@ const GIBBERISH_PATTERNS = [
   /^[zxcvbnm]{6,}$/i,             // bottom keyboard row
 ];
 
-function hasLowCharVariety(text) {
-  if (text.length <= 10) return false;
-
-  const cleaned = text.toLowerCase().replace(/[^a-z]/g, '');
-
-  if (cleaned.length === 0) return true;
-
-  const unique = new Set(cleaned).size;
-  return unique / cleaned.length < 0.25;
-}
-
-function hasLongConsonantRun(text) {
-  const cleaned = text.toLowerCase().replace(/[^a-z]/g, '');
-
-  // Six or more consonants in a row is very unlikely
-  // in a normal English issue description.
-  return /[bcdfghjklmnpqrstvwxyz]{7,}/i.test(cleaned);
-}
-
-function hasKeyboardMash(text) {
-  const cleaned = text.toLowerCase().replace(/[^a-z]/g, '');
-
-  if (cleaned.length < 8) return false;
-
-  const keyboardChars = new Set(
-    'qwertyuiopasdfghjklzxcvbnm'
-  );
-
-  const keyboardCount = [...cleaned].filter((char) =>
-    keyboardChars.has(char)
-  ).length;
-
-  // Detect strings that are mostly random keyboard characters
-  // with very little vowel/word structure.
-  const vowels = (cleaned.match(/[aeiou]/g) || []).length;
-  const vowelRatio = vowels / cleaned.length;
-
-  return keyboardCount / cleaned.length > 0.95 &&
-         cleaned.length >= 12 &&
-         vowelRatio < 0.15;
-}
-
-function hasNoSpacesOnLongText(text) {
-  return text.length > 30 && !text.includes(' ');
-}
-
 function isGibberish(text) {
   const trimmed = text.trim();
 
   if (!trimmed) return false;
 
+  // Obvious repeated single char: "aaaaaaaa..."
+  if (/^(.)\1{7,}$/i.test(trimmed)) {
+    return true;
+  }
+
+  // Entire string is just keyboard row mash
   if (GIBBERISH_PATTERNS.some((re) => re.test(trimmed))) {
     return true;
   }
 
-  if (hasLowCharVariety(trimmed)) {
+  // Very long uninterrupted string with no spaces
+  if (trimmed.length > 40 && !trimmed.includes(' ')) {
     return true;
   }
 
-  if (hasLongConsonantRun(trimmed)) {
-    return true;
-  }
-
-  if (hasKeyboardMash(trimmed)) {
-    return true;
-  }
-
-  if (hasNoSpacesOnLongText(trimmed)) {
+  // Repetitive short sequence: "asdfasdfasdf..."
+  if (/^(.{2,6})\1{4,}$/i.test(trimmed)) {
     return true;
   }
 
