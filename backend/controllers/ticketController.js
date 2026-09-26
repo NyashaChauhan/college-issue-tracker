@@ -424,10 +424,50 @@ async function updateTicket(req, res, next) {
   }
 }
 
+// ─────────────────────────────────────────────────────────────
+// POST /api/tickets/analyze
+// AI category and priority suggestion
+// ─────────────────────────────────────────────────────────────
+async function analyzeTicket(req, res, next) {
+  try {
+    const { title, description } = req.body;
+
+    const titleErr = validateTitle(title);
+    if (titleErr) {
+      return res.status(400).json({ message: titleErr });
+    }
+
+    const descErr = validateDescription(description);
+    if (descErr) {
+      return res.status(400).json({ message: descErr });
+    }
+
+    const result = await aiService.classifyIssue(title.trim(), description.trim());
+
+    if (!result || !result.success) {
+      return res.status(503).json({
+        message: result?.error || 'AI analysis is currently unavailable. Please select category and priority manually.',
+      });
+    }
+
+    return res.json({
+      suggestedCategory: result.suggestedCategory,
+      suggestedPriority: result.suggestedPriority,
+      reason: result.reason,
+    });
+  } catch (err) {
+    console.error('[ticketController] analyzeTicket error:', err);
+    return res.status(503).json({
+      message: 'AI analysis failed. Please select category and priority manually.',
+    });
+  }
+}
+
 module.exports = {
   createTicket,
   listTickets,
   getStats,
   getTicket,
   updateTicket,
+  analyzeTicket,
 };

@@ -59,7 +59,70 @@ export default function RaiseTicketForm({ onSuccess }) {
   // AI grouping state
   const [groupingDialog, setGroupingDialog] = useState(null); // { similarTicket }
 
+  // AI issue classification suggestion state
+  const [aiLoading, setAiLoading]       = useState(false);
+  const [aiSuggestion, setAiSuggestion] = useState(null); // { suggestedCategory, suggestedPriority, reason }
+  const [aiError, setAiError]           = useState('');
+
   const fileInputRef = useRef(null);
+
+  // ── AI Suggestion Handlers ───────────────────────────────────
+  const handleAnalyzeAI = async () => {
+    setAiError('');
+
+    const titleVal = form.title.trim();
+    const descVal  = form.description.trim();
+
+    if (!titleVal || titleVal.length < 5) {
+      setAiError('Please enter an issue title (at least 5 characters) before analyzing.');
+      return;
+    }
+
+    if (!descVal || descVal.length < 20) {
+      setAiError('Please enter a description (at least 20 characters) before analyzing.');
+      return;
+    }
+
+    setAiLoading(true);
+
+    try {
+      const res = await api.post('/tickets/analyze', {
+        title: titleVal,
+        description: descVal,
+      });
+
+      if (res.data?.suggestedCategory && res.data?.suggestedPriority) {
+        setAiSuggestion({
+          suggestedCategory: res.data.suggestedCategory,
+          suggestedPriority: res.data.suggestedPriority,
+          reason: res.data.reason || '',
+        });
+      } else {
+        setAiError('AI was unable to determine a suggestion. Please select manually.');
+      }
+    } catch (err) {
+      const msg = err.response?.data?.message || 'AI analysis is currently unavailable. Please select category and priority manually.';
+      setAiError(msg);
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const handleApplySuggestion = () => {
+    if (!aiSuggestion) return;
+    setForm((prev) => ({
+      ...prev,
+      category: aiSuggestion.suggestedCategory,
+      priority: aiSuggestion.suggestedPriority.toLowerCase(),
+    }));
+    setErrors((prev) => ({ ...prev, category: '' }));
+    setAiSuggestion(null);
+  };
+
+  const handleDismissSuggestion = () => {
+    setAiSuggestion(null);
+    setAiError('');
+  };
 
   // ── Live validation ──────────────────────────────────────────
   const handleChange = (e) => {
@@ -160,6 +223,8 @@ export default function RaiseTicketForm({ onSuccess }) {
       setPreviews([]);
       setErrors(INIT_ERRORS);
       setGroupingDialog(null);
+      setAiSuggestion(null);
+      setAiError('');
       if (fileInputRef.current) fileInputRef.current.value = '';
       onSuccess?.('Issue submitted successfully!');
     } catch (err) {
@@ -253,8 +318,149 @@ export default function RaiseTicketForm({ onSuccess }) {
           </div>
         </div>
 
-        {/* Category + Priority */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Category + Priority with AI Suggestion Action */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider text-brand-muted">
+              Classification
+            </span>
+            <button
+              type="button"
+              id="analyze-with-ai-btn"
+              onClick={handleAnalyzeAI}
+              disabled={aiLoading}
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold
+                         text-primary-700 bg-primary-50 border border-primary-200
+                         hover:bg-primary-100 hover:border-primary-300 active:bg-primary-200
+                         focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500
+                         disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150"
+            >
+              {aiLoading ? (
+                <>
+                  <svg className="animate-spin w-3.5 h-3.5 text-primary-600" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Analyzing…
+                </>
+              ) : (
+                <>
+                  <span className="text-accent font-bold">✦</span>
+                  Analyze with AI
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* AI Analysis Error Notice */}
+          {aiError && (
+            <div className="flex items-start gap-2 rounded-xl bg-amber-50 border border-amber-200 px-3.5 py-2.5 text-xs text-amber-900 animate-fade-in">
+              <svg className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <span className="flex-1">{aiError}</span>
+              <button
+                type="button"
+                onClick={() => setAiError('')}
+                className="text-amber-500 hover:text-amber-700 ml-1 font-bold"
+                aria-label="Dismiss error"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
+          {/* AI Suggestion Card */}
+          {aiSuggestion && (
+            <div
+              id="ai-suggestion-card"
+              className="rounded-xl border border-primary-200 bg-primary-50/70 p-4 shadow-card animate-fade-in space-y-3"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-accent text-sm font-bold">✦</span>
+                  <h4 className="font-bold text-primary-900 text-xs tracking-wider uppercase">
+                    AI Issue Analysis
+                  </h4>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleDismissSuggestion}
+                  className="text-brand-muted hover:text-brand-text p-1 rounded transition-colors"
+                  title="Dismiss suggestion"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-white/90 rounded-lg p-3 border border-primary-100">
+                <div>
+                  <p className="text-[10px] font-bold text-brand-muted uppercase tracking-wider mb-1">
+                    Suggested category
+                  </p>
+                  <p className="text-sm font-semibold text-brand-text">
+                    {aiSuggestion.suggestedCategory}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-brand-muted uppercase tracking-wider mb-1">
+                    Suggested priority
+                  </p>
+                  <div className="flex items-center gap-1.5">
+                    <span
+                      className="w-2.5 h-2.5 rounded-full"
+                      style={{
+                        backgroundColor: PRIORITIES.find(
+                          (p) => p.value === aiSuggestion.suggestedPriority?.toLowerCase()
+                        )?.color || '#0F766E',
+                      }}
+                    />
+                    <p className="text-sm font-semibold text-brand-text capitalize">
+                      {aiSuggestion.suggestedPriority}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {aiSuggestion.reason && (
+                <div>
+                  <p className="text-[10px] font-bold text-brand-muted uppercase tracking-wider mb-1">
+                    Reason
+                  </p>
+                  <p className="text-xs text-brand-muted leading-relaxed">
+                    {aiSuggestion.reason}
+                  </p>
+                </div>
+              )}
+
+              <div className="flex items-center gap-2.5 pt-1">
+                <button
+                  type="button"
+                  id="use-suggestions-btn"
+                  onClick={handleApplySuggestion}
+                  className="btn-primary text-xs py-2 px-3.5 flex-1"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Use suggestions
+                </button>
+                <button
+                  type="button"
+                  id="keep-choices-btn"
+                  onClick={handleDismissSuggestion}
+                  className="btn-secondary text-xs py-2 px-3.5 flex-1"
+                >
+                  Keep my choices
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Category + Priority */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label htmlFor="category" className="label">Category *</label>
             <select
@@ -302,6 +508,7 @@ export default function RaiseTicketForm({ onSuccess }) {
             </p>
           </div>
         </div>
+      </div>
 
         {/* Image Upload */}
         <div>

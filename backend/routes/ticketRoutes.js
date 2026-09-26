@@ -13,6 +13,7 @@ const {
   getStats,
   getTicket,
   updateTicket,
+  analyzeTicket,
 } = require('../controllers/ticketController');
 
 const { verifyToken, requireRole } = require('../middleware/authMiddleware');
@@ -29,6 +30,9 @@ router.get('/',  listTickets);
 
 // Multer MUST run before createTicket so req.files is populated
 router.post('/', uploadImages, createTicket);
+
+// AI issue category & priority analysis
+router.post('/analyze', analyzeTicket);
 
 // Single ticket
 router.get('/:id', getTicket);
