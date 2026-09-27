@@ -188,6 +188,40 @@ function TicketCard({ ticket, isManagement, onStatusChange, updating, onExpand }
             </div>
           )}
 
+          {/* Parent issue — shown when this ticket was grouped */}
+          {ticket.parent_ticket && (
+            <div className="bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3">
+              <div className="flex items-center gap-1.5 mb-1">
+                <svg
+                  className="w-3.5 h-3.5 text-primary-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 10V3L4 14h7v7l9-11h-7"
+                  />
+                </svg>
+
+                <p className="text-xs font-semibold text-primary-600 uppercase tracking-wider">
+                  AI-Grouped With Existing Issue
+                </p>
+              </div>
+
+              <p className="text-sm font-medium text-brand-text">
+                {ticket.parent_ticket.title}
+              </p>
+
+              <p className="text-xs text-brand-muted mt-1">
+                Originally reported by {ticket.parent_ticket.raised_by_name}
+                {' '}({ticket.parent_ticket.raised_by_role})
+              </p>
+            </div>
+          )}
+
           {/* Grouped / linked issues */}
           {ticket.grouped_tickets && ticket.grouped_tickets.length > 0 && (
             <div>

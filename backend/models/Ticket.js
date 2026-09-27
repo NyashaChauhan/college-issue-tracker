@@ -65,6 +65,23 @@ const Ticket = {
     );
     ticket.grouped_tickets = childResult.rows;
 
+    // Attach parent ticket when this ticket is grouped
+    ticket.parent_ticket = null;
+
+    if (ticket.parent_ticket_id) {
+      const parentResult = await pool.query(
+        `SELECT t.id, t.title, t.created_at,
+                u.name AS raised_by_name,
+                u.role AS raised_by_role
+        FROM tickets t
+        LEFT JOIN users u ON t.raised_by = u.id
+        WHERE t.id = $1`,
+        [ticket.parent_ticket_id]
+      );
+
+      ticket.parent_ticket = parentResult.rows[0] || null;
+    }
+
     return ticket;
   },
 
@@ -77,7 +94,7 @@ const Ticket = {
    * @returns {Promise<{ tickets: object[], total: number }>}
    */
   async findMany({ raisedBy, status, category, page = 1, limit = 20 }) {
-    const conditions = ['t.parent_ticket_id IS NULL'];
+    const conditions = raisedBy ? [] : ['t.parent_ticket_id IS NULL'];
     const params = [];
     let idx = 1;
 
